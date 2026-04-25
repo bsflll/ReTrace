@@ -1,40 +1,40 @@
 # ReTrace
-Counterfactual Reasoning for Robot Recovery
+Counterfactual Reasoning for Vision-Based Robot Recovery
 
 ## Summary
-Current robot policies (VLAs) fail silently. When a grasp slips or an action doesn't work, they have no mechanism to understand why it failed or how to recover.
+Vision-language-action (VLA) policies fail silently. When a grasp slips or an action doesn't work, they have no mechanism to understand what went wrong visually or how to recover.
 
-ReTrace trains an LLM to do counterfactual physical reasoning on robot failures. When execution stalls or confidence drops, the system triggers slow, deliberate reasoning that:
+ReTrace trains an LLM to do counterfactual physical reasoning on visual robot failures. When execution stalls or confidence drops, the system triggers slow, deliberate reasoning that:
 
-- Explains what went wrong
-- Considers counterfactuals ("what if I had grasped from a different angle?")
-- Proposes actionable recovery plans the policy can condition on
+- Watches the visual trajectory and explains what went wrong
+- Considers counterfactuals ("what if I had approached from a different angle?")
+- Proposes actionable visual recovery plans the policy can condition on
 
 ## What makes this different
-**Policy reasoning isn't classification, it's counterfactual.** You need to answer "what would have happened if I'd grasped 2cm to the left?" - that requires physics intuition, not just pattern matching.
+**Visual reasoning isn't classification, it's counterfactual.** You need to answer "what would the scene look like if I'd grasped 2cm to the left?" - that requires visual physics intuition, not just pattern matching on frames.
 
-**Temporal credit assignment is hard.** A task fails at step 47, but which of the previous 46 steps caused it? Maybe step 12 put the object in a bad orientation that only mattered later.
+**Temporal credit assignment from video is hard.** A task fails at frame 470, but which of the previous frames shows the actual mistake? Maybe frame 120 shows the object placed in a bad orientation that only mattered later.
 
-**The reasoning has to be actionable.** "The grasp failed because the mug was slippery" is useless. "Retry with a pinch grasp from the handle, approach from 15° left" is useful.
+**The reasoning has to be visually grounded and actionable.** "The grasp failed because the mug was slippery" is useless. "Retry with a pinch grasp on the handle visible at the right edge of frame, approach from 15° left" is useful.
 
 ## Plan
 
-### Phase 1: Data Collection
+### Phase 1: Visual Data Collection
 - Run VLA policies in simulation (LIBERO, RoboMimic)
-- Collect thousands of failure trajectories
-- For each failure, generate counterfactual rollouts by rewinding and perturbing in sim
+- Collect thousands of failure trajectories as video + proprioception
+- For each failure, generate counterfactual visual rollouts by rewinding and perturbing actions in sim
 
-### Phase 2: Reasoning Trace Generation
-- Use counterfactual data to generate reasoning traces
-- Format: "The grasp failed because X. Counterfactual Y would have succeeded. Next attempt should do Z."
+### Phase 2: Visual Reasoning Trace Generation
+- Use counterfactual video data to generate reasoning traces
+- Format: "Looking at the trajectory, the grasp failed because X. The counterfactual rollout shows Y would have worked. Next attempt should do Z based on current visual state."
 
 ### Phase 3: Training
-- Finetune or midtrain an LLM on counterfactual reasoning traces
+- Finetune or midtrain a vision-language model on counterfactual visual reasoning traces
 - Experiment with data mix and scaling
 
 ### Phase 4: Evaluation
-- Does triggering the reasoning module improve task success rate on held-out failures?
-- Ablations: How much counterfactual data is needed? Does reasoning transfer across robot morphologies? Sim2real transfer?
+- Does triggering the visual reasoning module improve task success rate on held-out failures?
+- Ablations: How much counterfactual video data is needed? Does reasoning transfer across robot morphologies and camera viewpoints? Sim2real visual transfer?
 
 ## Novel Contribution
-First work to show that LLM reasoning trained on counterfactual robot data actually improves recovery rates, vs using off-the-shelf LLMs as high-level planners.
+First work to show that vision-language reasoning trained on counterfactual robot video actually improves recovery rates, vs using off-the-shelf VLMs as high-level planners.
